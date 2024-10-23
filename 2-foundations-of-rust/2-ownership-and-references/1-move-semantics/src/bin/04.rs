@@ -15,8 +15,8 @@ fn main() {
 }
 
 ///`create_string()` no longer takes `s: String` as argument
-fn create_string() -> String {
-    let mut s = s;
+fn create_string(s: String) -> String {
+    let s1 = s;
 
-    s
+    s1
 }
