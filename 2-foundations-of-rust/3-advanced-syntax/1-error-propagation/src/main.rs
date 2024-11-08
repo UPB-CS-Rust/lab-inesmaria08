@@ -19,32 +19,47 @@ use std::io::{self, BufRead, BufReader, Lines};
 
 //change this into:
 //fn read_lines(filename: &str) -> Result<Lines<BufReader<File>>, io::Error> {
-fn read_lines(filename: &str) -> Lines<BufReader<File>> {
-    let file = File::open(filename).unwrap(); // this can easily fail
-    BufReader::new(file).lines()
+fn read_lines(filename: &str) -> Result<Lines<BufReader<File>>, io::Error> {
+    // match File::open(filename) {
+    //     Ok(file) => Ok(BufReader::new(file).lines()),
+    //     Err(e) => Err(e),
+    // }
+    let lines = File::open(filename)?;
+    Ok(BufReader::new(lines).lines())
 }
+    
+fn count_bytes_and_lines(filename: &str) -> Result<(usize, usize, usize), io::Error> {
+    let lines = match read_lines(filename) {
+        Ok(lines) => lines,
+        Err(e) => return Err(e),
+    };
 
-//change this into:
-//fn count_bytes_and_lines(filename: &str) -> Result<(usize, usize, usize), io::Error> {
-fn count_bytes_and_lines(filename: &str) -> (usize, usize, usize) {
-    let lines = read_lines(filename);
     let mut line_count = 0;
     let mut word_count = 0;
     let mut byte_count = 0;
     for line in lines {
-        let text = line.unwrap(); // this will usually not fail
-        line_count += 1;
-        word_count += text.split_whitespace().count();
-        byte_count += text.len();
+        match line {
+           Ok(text) => {
+                line_count += 1;
+                word_count += text.split_whitespace().count();
+                byte_count += text.len();
+            }
+            Err(e) => return Err(e),
+        }
     }
-
-    (line_count, word_count, byte_count)
+    Ok((line_count, word_count, byte_count))
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<String> = env::args().collect();    
     let filename = &args[1];
-
-    let (lines, words, bytes) = count_bytes_and_lines(filename);
-    println!("{filename}: {lines} lines, {words} words, {bytes} bytes");
+    
+    match count_bytes_and_lines(filename) {
+        Ok((lines, words, bytes)) => {
+            println!("{filename}: {lines} lines, {words} words, {bytes} bytes");
+        }
+        Err(e) => {
+            eprintln!("Error {}: {}", filename, e);
+        }
+    }
 }
